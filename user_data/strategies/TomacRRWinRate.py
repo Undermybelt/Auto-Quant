@@ -48,7 +48,7 @@ class TomacRRWinRate(IStrategy):
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         dataframe["rsi"] = ta.RSI(dataframe, timeperiod=14)
-        bb = ta.BBANDS(dataframe, timeperiod=20, nbdevup=2, nbdevdn=2)
+        bb = ta.BBANDS(dataframe, timeperiod=20, nbdevup=2.0, nbdevdn=2.0)
         dataframe["bb_lower"] = bb["lowerband"]
         dataframe["bb_middle"] = bb["middleband"]
         return dataframe
