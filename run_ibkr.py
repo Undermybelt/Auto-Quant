@@ -38,6 +38,12 @@ from freqtrade.enums import RunMode
 from freqtrade.optimize.backtesting import Backtesting
 from freqtrade.resolvers import ExchangeResolver
 
+from auto_quant_meta import (
+    StrategyMeta,
+    StrategyMetaError,
+    discover_meta_in_dir,
+)
+
 PROJECT_DIR = Path(__file__).parent.resolve()
 USER_DATA = PROJECT_DIR / "user_data"
 STRATEGIES_DIR = USER_DATA / "strategies_ibkr"
@@ -155,15 +161,35 @@ def get_commit() -> str:
         return "unknown"
 
 
-def discover_strategies() -> list[str]:
+def discover_strategies() -> list[tuple[str, StrategyMeta]]:
+    """Discover strategies and validate their AUTO_QUANT_META blocks.
+
+    Returns a list of (name, meta) tuples. Raises SystemExit with a clean
+    aggregated error message if ANY strategy fails meta validation, so the
+    operator sees the full failure list before any backtest runs.
+    """
     if not STRATEGIES_DIR.exists():
         return []
-    names: list[str] = []
-    for path in sorted(STRATEGIES_DIR.glob("*.py")):
-        if path.stem.startswith("_"):
+    found: list[tuple[str, StrategyMeta]] = []
+    errors: list[str] = []
+    for path, result in discover_meta_in_dir(STRATEGIES_DIR):
+        if isinstance(result, StrategyMetaError):
+            errors.append(f"  {path.name}: {result}")
             continue
-        names.append(path.stem)
-    return names
+        if result.strategy != path.stem:
+            errors.append(
+                f"  {path.name}: AUTO_QUANT_META Strategy='{result.strategy}' "
+                f"does not match filename stem '{path.stem}'"
+            )
+            continue
+        found.append((path.stem, result))
+    if errors:
+        raise SystemExit(
+            "ERROR: AUTO_QUANT_META validation failed for the following "
+            "strategies. Fix the docstrings (see _template.py.example) "
+            "before running:\n" + "\n".join(errors)
+        )
+    return found
 
 
 def run_backtest(strategy_name: str) -> dict[str, Any]:
@@ -187,8 +213,9 @@ def run_backtest(strategy_name: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Output (matches run_tomac.py block format for easy agent parsing)
 
-def emit_block(strategy_name: str, commit: str, config_pairs: list[str],
-                 timerange: str, metrics: dict[str, Any]) -> None:
+def emit_block(strategy_name: str, meta: StrategyMeta, commit: str,
+                 config_pairs: list[str], timerange: str,
+                 metrics: dict[str, Any]) -> None:
     agg = metrics["aggregate"]
     print("---")
     print(f"strategy:         {strategy_name}")
@@ -196,6 +223,7 @@ def emit_block(strategy_name: str, commit: str, config_pairs: list[str],
     print(f"config:           {CONFIG.name}")
     print(f"timerange:        {timerange}")
     print(f"pairs:            {','.join(config_pairs)}")
+    print(f"auto_quant_meta:  {json.dumps(meta.to_json_dict(), separators=(',', ':'))}")
     print(f"sharpe:           {agg['sharpe']:.4f}")
     print(f"sortino:          {agg['sortino']:.4f}")
     print(f"calmar:           {agg['calmar']:.4f}")
@@ -222,11 +250,13 @@ def emit_block(strategy_name: str, commit: str, config_pairs: list[str],
     print()
 
 
-def emit_error(strategy_name: str, commit: str, exc: BaseException) -> None:
+def emit_error(strategy_name: str, meta: StrategyMeta, commit: str,
+                 exc: BaseException) -> None:
     print("---")
     print(f"strategy:         {strategy_name}")
     print(f"commit:           {commit}")
     print(f"config:           {CONFIG.name}")
+    print(f"auto_quant_meta:  {json.dumps(meta.to_json_dict(), separators=(',', ':'))}")
     print(f"status:           ERROR")
     print(f"error_type:       {type(exc).__name__}")
     print(f"error_msg:        {exc}")
@@ -282,19 +312,20 @@ def main() -> int:
         return 2
 
     commit = get_commit()
-    print(f"Discovered {len(strategies)} strategies: {', '.join(strategies)}")
+    names = [name for name, _ in strategies]
+    print(f"Discovered {len(strategies)} strategies: {', '.join(names)}")
     print(f"Timerange: {timerange}  Pairs: {','.join(config_pairs)}")
     print()
 
     n_ok = n_err = 0
-    for name in strategies:
+    for name, meta in strategies:
         try:
             results = run_backtest(name)
             metrics = extract_metrics(results, name)
-            emit_block(name, commit, config_pairs, timerange, metrics)
+            emit_block(name, meta, commit, config_pairs, timerange, metrics)
             n_ok += 1
         except BaseException as exc:  # noqa: BLE001  (mirror run.py isolation)
-            emit_error(name, commit, exc)
+            emit_error(name, meta, commit, exc)
             n_err += 1
 
     print(f"Done: {n_ok} succeeded, {n_err} failed.")

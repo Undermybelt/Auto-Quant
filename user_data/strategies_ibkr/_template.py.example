@@ -1,19 +1,32 @@
 """
 <Name> — one-line summary (rename this file AND the class below; they must match)
 
-Paradigm: <mean-reversion | trend-following | volatility | breakout | other>
-Hypothesis: <what you believe about this asset that this strategy tests. Be
-             specific — "SPY 5m mean-reverts after 3-bar streak" beats
-             "mean-reversion">
-Parent: <another strategy name, or "root" for hypotheses-from-scratch>
-Created: <git commit hash where first introduced — fill in after first commit>
-Status: active
-Asset class: <equities | forex | crypto | mixed>
+# AUTO_QUANT_META v1
+# This block is machine-parsed by export_strategy_library.py and ict-engine's
+# auto-quant-results-import command. ALL fields below are required for the
+# strategy to be eligible for ict-engine BBN prior initialization. Do not
+# remove the START/END markers. Free-form prose belongs OUTSIDE this block.
+Strategy:        <YourName, must match class name and filename>
+Mutation_id:     <stable unique id, e.g. mb-001 or git-short-rev-yyyymmdd>
+Base_factor:     <primary factor name, e.g. ict_breakout_5m / mmxm_distribution>
+Hypothesis:      <one-sentence falsifiable claim, e.g.
+                  "SPY 5m breaks out of manipulation phase ranges with
+                  >55% win rate when ATR > 0.6 of 30-bar mean">
+Paradigm:        <breakout | trend-following | mean-reversion | volatility | structural>
+Expected_regime: <expansion | contraction | manipulation | distribution | trend | reversal>
+Factors_used:    <comma-separated factor names, e.g. bos, fvg, atr, sma>
+Parent:          <another strategy name, or "root" for hypotheses-from-scratch>
+Asset_class:     <equities | forex | crypto | futures | mixed>
+Status:          <active | candidate | retired>
+Created:         <git commit short-sha where first introduced — fill in after first commit>
+# END_AUTO_QUANT_META
 
 This file is a skeleton reference. To create a new strategy:
   1. Copy this file to `user_data/strategies_ibkr/<YourName>.py`
   2. Rename the class to `<YourName>` (must match filename)
-  3. Fill in the docstring fields above
+  3. Fill in EVERY field in the AUTO_QUANT_META block above (use sensible
+     placeholders if not yet known; the parser rejects strategies with
+     `<...>` placeholders left in)
   4. Implement populate_indicators / populate_entry_trend / populate_exit_trend
   5. Remove this block of instructional text
 
