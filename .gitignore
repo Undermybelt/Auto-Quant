@@ -31,3 +31,7 @@ __pycache__/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# IBKR bridge user-local configs (each user keeps their own; examples/ is committed)
+scripts/ibkr_bridge/my_config*
+scripts/ibkr_bridge/__pycache__/
