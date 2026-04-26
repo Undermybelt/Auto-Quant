@@ -1,0 +1,73 @@
+{
+  "_comment": "IBKR live-data backtest config — sibling of config.json / config.tomac.json. The agent loop runs strategies in user_data/strategies_ibkr/ via `uv run run_ibkr.py`. Data must be prepared first via `uv run prepare_ibkr.py --from-redis` (or --from-csv-dir).",
+
+  "max_open_trades": 1,
+  "stake_currency": "USD",
+  "stake_amount": "unlimited",
+  "tradable_balance_ratio": 0.99,
+  "fiat_display_currency": "USD",
+  "timeframe": "5m",
+  "dry_run": true,
+  "dry_run_wallet": 100000,
+  "cancel_open_orders_on_exit": false,
+  "trading_mode": "spot",
+
+  "unfilledtimeout": {
+    "entry": 10,
+    "exit": 10,
+    "exit_timeout_count": 0,
+    "unit": "minutes"
+  },
+
+  "entry_pricing": {
+    "price_side": "same",
+    "use_order_book": false,
+    "order_book_top": 1,
+    "price_last_balance": 0.0,
+    "check_depth_of_market": {
+      "enabled": false,
+      "bids_to_ask_delta": 1
+    }
+  },
+
+  "exit_pricing": {
+    "price_side": "same",
+    "use_order_book": false,
+    "order_book_top": 1
+  },
+
+  "exchange": {
+    "_comment": "exchange.name MUST be a real ccxt name (binance is the universally-installed one) so freqtrade boots, but no API call is made during backtest. pair_whitelist holds synthetic IBKR pseudo-pairs that prepare_ibkr.py writes feather files for. Add/remove pairs to match what your bridge config subscribes to.",
+    "name": "binance",
+    "key": "",
+    "secret": "",
+    "ccxt_config": {},
+    "ccxt_async_config": {},
+    "pair_whitelist": [
+      "SPY/USD",
+      "QQQ/USD",
+      "AAPL/USD",
+      "EUR/USD",
+      "BTC/USD"
+    ],
+    "pair_blacklist": [],
+    "skip_pair_validation": true,
+    "skip_open_order_update": true
+  },
+
+  "pairlists": [
+    {"method": "StaticPairList"}
+  ],
+
+  "fee": 0.0,
+
+  "dataformat_ohlcv": "feather",
+  "dataformat_trades": "feather",
+
+  "internals": {
+    "process_throttle_secs": 5
+  },
+
+  "_timerange_comment": "Adjust to whatever date window your prepared feathers cover. With --from-redis you typically have only the last few days; with --from-csv-dir you can have years.",
+  "timerange": "20240101-20251231"
+}

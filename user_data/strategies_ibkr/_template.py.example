@@ -1,0 +1,125 @@
+"""
+<Name> — one-line summary (rename this file AND the class below; they must match)
+
+Paradigm: <mean-reversion | trend-following | volatility | breakout | other>
+Hypothesis: <what you believe about this asset that this strategy tests. Be
+             specific — "SPY 5m mean-reverts after 3-bar streak" beats
+             "mean-reversion">
+Parent: <another strategy name, or "root" for hypotheses-from-scratch>
+Created: <git commit hash where first introduced — fill in after first commit>
+Status: active
+Asset class: <equities | forex | crypto | mixed>
+
+This file is a skeleton reference. To create a new strategy:
+  1. Copy this file to `user_data/strategies_ibkr/<YourName>.py`
+  2. Rename the class to `<YourName>` (must match filename)
+  3. Fill in the docstring fields above
+  4. Implement populate_indicators / populate_entry_trend / populate_exit_trend
+  5. Remove this block of instructional text
+
+File names starting with `_` are ignored by run_ibkr.py — that's how this
+template stays excluded from backtests.
+
+========================================================================
+IBKR DATA MODEL (different from the crypto/run.py loop)
+========================================================================
+
+Backtest path is ENTIRELY OFFLINE — no IBKR connection needed at run time.
+The data flow is:
+
+    bridge.py (or fetch_external.py ibkr-bulk)
+      → Redis Streams (or CSV files)
+      → prepare_ibkr.py
+      → user_data/data/<PAIR>-5m.feather
+      → run_ibkr.py / Backtesting.start()
+
+Pair conventions (see prepare_ibkr.DEFAULT_PAIR_MAP):
+  IBKR symbol           FreqTrade pair
+  -----------           ---------------
+  SPY, QQQ, AAPL, ...   SPY/USD, QQQ/USD, AAPL/USD
+  EURUSD, USDJPY, ...   EUR/USD, USD/JPY
+  BTC, ETH (PAXOS)      BTC/USD, ETH/USD
+  ES, NQ, YM, RTY       ES/USD, NQ/USD
+
+config.ibkr.json sets `timeframe: 5m` so this template uses 5-minute
+bars. Override per-strategy with the `timeframe = "Xm"` class attribute
+if you want a different base TF.
+
+========================================================================
+LIVE-SIGNAL AUGMENTATION (optional, dry_run only)
+========================================================================
+
+If you ALSO want to use the bridge's live data inside a dry_run, you can
+import IbkrConsumer in populate_indicators and read the latest snapshot.
+This is NOT used during backtest (backtest uses the preloaded feather
+data only) — it's purely a hook for paper-trading sanity checks.
+
+    from scripts.ibkr_bridge.consumer import IbkrConsumer
+
+    class MyStrat(IStrategy):
+        _ibkr: IbkrConsumer | None = None
+
+        def populate_indicators(self, df, metadata):
+            ...
+            # Backtest path: skip — `df` already contains the prepared bars.
+            if self.dp.runmode.value not in ("backtest", "hyperopt"):
+                if self._ibkr is None:
+                    self._ibkr = IbkrConsumer()
+                snap = self._ibkr.snapshot(metadata["pair"].split("/")[0])
+                df.loc[df.index[-1], "live_bid"] = snap.get("bid")
+            return df
+
+Don't put any I/O in the backtest path — `runmode.value == "backtest"`
+must be a no-op or you'll bias the results.
+"""
+from __future__ import annotations
+
+import talib.abstract as ta  # noqa: F401  — available if you want it
+from pandas import DataFrame
+
+from freqtrade.strategy import IStrategy
+
+
+class _Template(IStrategy):
+    INTERFACE_VERSION = 3
+
+    # ---- attributes every strategy must declare ----
+    timeframe = "5m"          # base TF — must match config.ibkr.json
+    can_short = False
+
+    # Neutral baseline: no ROI cap, no stoploss. Override if needed.
+    # Lesson from v0.1.0: tight ROI clipping inflates Sharpe by compressing
+    # return variance — gray-list yourself if you go there without reason.
+    minimal_roi = {"0": 100}
+    stoploss = -0.99
+
+    trailing_stop = False
+    process_only_new_candles = True
+
+    use_exit_signal = True
+    exit_profit_only = False
+    ignore_roi_if_entry_signal = False
+
+    # Bump this up if your indicators need a longer warmup.
+    # 30 bars × 5m = 2.5 h — enough for short MAs / RSI(14). Use 200+ if
+    # you reference SMA(200) or similar.
+    startup_candle_count: int = 30
+
+    # ---- three methods every strategy must implement ----
+
+    def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        # All five default IBKR pairs share the 5m TF, so add your factor
+        # columns here once and they apply across the universe.
+        #
+        # Example:
+        # dataframe["rsi"] = ta.RSI(dataframe, timeperiod=14)
+        # dataframe["atr"] = ta.ATR(dataframe, timeperiod=14)
+        return dataframe
+
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        # Example: dataframe.loc[dataframe["rsi"] < 25, "enter_long"] = 1
+        return dataframe
+
+    def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        # Example: dataframe.loc[dataframe["rsi"] > 75, "exit_long"] = 1
+        return dataframe
