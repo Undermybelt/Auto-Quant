@@ -37,7 +37,7 @@ import json
 import re
 import subprocess
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +45,6 @@ from auto_quant_meta import (
     StrategyMeta,
     StrategyMetaError,
     discover_meta_in_dir,
-    parse_meta_from_file,
 )
 
 MANIFEST_VERSION = "1.0"
@@ -347,7 +346,6 @@ def _build_argparser() -> argparse.ArgumentParser:
 
 def _selftest() -> int:
     """In-memory test of parse_log + assemble_manifest invariants."""
-    import io
     import tempfile
 
     sample_log = """preamble line
