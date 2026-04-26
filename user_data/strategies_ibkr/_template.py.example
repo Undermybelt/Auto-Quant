@@ -136,3 +136,25 @@ class _Template(IStrategy):
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # Example: dataframe.loc[dataframe["rsi"] > 75, "exit_long"] = 1
         return dataframe
+
+    # ---- optional: live-signal contract for ict-engine Phase 2 -----------
+    # If you want this strategy to feed factor signals into ict-engine's
+    # live decision loop, implement `live_factor_contributions`. It is
+    # called by `auto_quant_live_signal_publisher.py` once per finalised
+    # bar with the indicator-enriched dataframe and the index of the most
+    # recent row, and must return a list of FactorContribution dicts that
+    # match the ict-engine wire schema (see
+    # `@/Users/thrill3r/projects-ict-engine/ict-engine/docs/2026-04-26-auto-quant-live-signals-plan.md`).
+    #
+    # Strategies WITHOUT this method are still valid for backtest +
+    # prior-init (Phase 1); the publisher will just skip them with a
+    # diagnostic. Returning an empty list is also OK ("no signal yet").
+
+    def live_factor_contributions(
+        self, dataframe: DataFrame, latest_index: int
+    ) -> list[dict]:
+        # Replace the body. Required keys per dict:
+        #   factor_name, category, direction ("Bull"|"Bear"|"Neutral"),
+        #   value, confidence, weighted_score, uncertainty_contribution,
+        #   explanation
+        return []
