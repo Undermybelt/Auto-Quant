@@ -68,10 +68,29 @@ Plus:
 - **v0.2.0** ([archive](versions/0.2.0/)): multi-strategy (up to 3 slots).
   5 paradigms tested / 3 kept / 0 Goodhart attempts. Peak clean Sharpe
   0.67 (~3.5× better than v0.1.0's true-edge). See [retrospective](versions/0.2.0/retrospective.md).
-- **v0.3.0** (current): multi-strategy + multi-timeframe + multi-asset
-  portfolio. Adds 4h + 1d informative data, expands universe from 2 pairs
-  to 5 (BTC/ETH/SOL/BNB/AVAX), and emits per-pair metrics alongside
-  portfolio aggregate so agents can reason about per-asset edge. In-flight.
+- **v0.3.0** ([archive](versions/0.3.0/)): multi-strategy + multi-timeframe +
+  multi-asset portfolio. Adds 4h + 1d informative data, expands universe to
+  5 pairs (BTC/ETH/SOL/BNB/AVAX), and emits per-pair metrics. **First
+  project-wide clean Sharpe > 1.0** (1.07 on BTCLeaderBreakX). Also: first
+  fork event + isolation experiment. See [retrospective](versions/0.3.0/retrospective.md).
+- **v0.4.0** ([archive](versions/0.4.0/)): regime extension to 2021-2025
+  + dynamic position sizing. Real-edge clean Sharpe **1.122 / +232%** on
+  5-year regime mix (strictly stronger than v0.3.0 on harder data). Surfaced
+  the "Sharpe-as-single-oracle has a degeneracy boundary" finding and the
+  cleanest sizing-vs-edge controlled experiment in the project.
+  See [retrospective](versions/0.4.0/retrospective.md).
+- **v0.4.1** ([archive](versions/0.4.1/)): four affordances bundled —
+  `pair_basket` (strategy-declared portfolio), `test_timeranges` (multi-regime
+  backtest with `robust_sharpe = min` as headline), per-timerange buy-and-hold
+  benchmark, and multi-objective gates (`profit_floor`, `min_position_size`,
+  `pareto_dominated_by`) flanking the headline metric. Direct response to
+  v0.4.0's Sharpe-degeneracy finding. **First multi-strategy lineup with
+  `robust_sharpe > 0` across all four declared regimes (bull/winter/recovery/
+  full-5y) simultaneously**, but the run also surfaced an "early Pareto lock"
+  pattern where the regime-robust frontier was set at round 9 by a single
+  sizing ablation and never broken across the next 20 rounds. Five new
+  cross-version findings + four reinforcements + two narrows of prior
+  universal claims. See [retrospective](versions/0.4.1/retrospective.md).
 
 ## Requirements
 
