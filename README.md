@@ -139,6 +139,36 @@ prompt something like:
 The agent reads `program.md`, goes through setup, then enters the experiment
 loop. It keeps iterating until you interrupt it or it runs out of context.
 
+### Parallel workspaces
+
+By default Auto-Quant keeps the upstream single-workspace contract: `config.json`,
+`user_data/`, and `results.tsv` all live in the repo root. For concurrent
+agents, give each lane its own mutable workspace and optionally share only the
+read-only candle data:
+
+```bash
+mkdir -p /tmp/aq-lane-a/user_data/strategies
+cp config.json /tmp/aq-lane-a/config.json
+printf 'commit\tevent\tstrategy_name\tsharpe\tmax_dd\tnote\n' > /tmp/aq-lane-a/results.tsv
+
+AUTO_QUANT_WORKSPACE=/tmp/aq-lane-a \
+AUTO_QUANT_DATA_DIR="$PWD/user_data/data" \
+uv run run.py > /tmp/aq-lane-a/run.log 2>&1
+```
+
+Useful overrides:
+
+- `AUTO_QUANT_WORKSPACE`: root for this lane's mutable files.
+- `AUTO_QUANT_CONFIG`: config file override, relative paths resolve inside the
+  workspace.
+- `AUTO_QUANT_USER_DATA`: user data root override.
+- `AUTO_QUANT_DATA_DIR`: candle data directory override; use this to share
+  prepared data read-only across lanes.
+- `AUTO_QUANT_STRATEGIES_DIR`: strategy directory override.
+- `AUTO_QUANT_RESULTS_TSV`: Pareto/history log override.
+
+If no environment variables are set, behavior is unchanged from upstream.
+
 ### Permissions
 
 The loop only works if the agent can run commands without a human approving

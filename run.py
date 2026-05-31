@@ -43,6 +43,7 @@ Usage:
 from __future__ import annotations
 
 import importlib.util
+import json
 import math
 import subprocess
 import sys
@@ -57,17 +58,32 @@ from freqtrade.configuration import Configuration
 from freqtrade.enums import RunMode
 from freqtrade.optimize.backtesting import Backtesting
 
+from auto_quant_workspace import workspace_paths
+
 # ---------------------------------------------------------------------------
-# Fixed constants. Do not modify.
+# Run path contract. Defaults match upstream; env vars can isolate workspaces.
 # ---------------------------------------------------------------------------
 PROJECT_DIR = Path(__file__).parent.resolve()
-USER_DATA = PROJECT_DIR / "user_data"
-DATA_DIR = USER_DATA / "data"
-STRATEGIES_DIR = USER_DATA / "strategies"
-CONFIG = PROJECT_DIR / "config.json"
+PATHS = workspace_paths(PROJECT_DIR)
+WORKSPACE_DIR = PATHS.workspace_dir
+USER_DATA = PATHS.user_data
+DATA_DIR = PATHS.data_dir
+STRATEGIES_DIR = PATHS.strategies_dir
+CONFIG = PATHS.config
+RESULTS_TSV = PATHS.results_tsv
 
-DEFAULT_TIMERANGE = "20210101-20251231"
-PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "AVAX/USDT"]
+_CONFIG_JSON: dict[str, Any] = {}
+if CONFIG.exists():
+    try:
+        _CONFIG_JSON = json.loads(CONFIG.read_text())
+    except Exception:
+        _CONFIG_JSON = {}
+
+DEFAULT_TIMERANGE = _CONFIG_JSON.get("timerange", "20210101-20251231")
+PAIRS = (
+    _CONFIG_JSON.get("exchange", {}).get("pair_whitelist")
+    or ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "AVAX/USDT"]
+)
 PAIRS_STR = ",".join(PAIRS)
 
 # Multi-objective gates (v0.4.1)
@@ -319,7 +335,7 @@ def load_prior_robust_metrics() -> list[dict[str, Any]]:
     the existing 5-column schema. profit isn't stored in tsv so dominance
     here is on (sharpe, max_dd) only — partial Pareto, still useful.
     """
-    path = PROJECT_DIR / "results.tsv"
+    path = RESULTS_TSV
     if not path.exists():
         return []
     rows: list[dict[str, Any]] = []
@@ -487,6 +503,9 @@ def print_error(
 # Main
 # ---------------------------------------------------------------------------
 def main() -> int:
+    if not CONFIG.exists():
+        print(f"ERROR: config not found: {CONFIG}", file=sys.stderr)
+        return 2
     strategies = discover_strategies()
     if not strategies:
         print(

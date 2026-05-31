@@ -13,6 +13,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,21 +33,34 @@ except ImportError:
     sys.exit(1)
 
 from freqtrade.commands.data_commands import start_download_data  # noqa: E402
+from auto_quant_workspace import workspace_paths  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# Fixed constants — these define the evaluation arena. Do not modify.
+# Run path contract. Defaults match upstream; env vars can isolate workspaces.
 # ---------------------------------------------------------------------------
 PROJECT_DIR = Path(__file__).parent.resolve()
-USER_DATA = PROJECT_DIR / "user_data"
-CONFIG = PROJECT_DIR / "config.json"
+PATHS = workspace_paths(PROJECT_DIR)
+WORKSPACE_DIR = PATHS.workspace_dir
+USER_DATA = PATHS.user_data
+DATA_DIR = PATHS.data_dir
+CONFIG = PATHS.config
 
-EXCHANGE = "binance"
-PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "AVAX/USDT"]
+_CONFIG_JSON = {}
+if CONFIG.exists():
+    try:
+        _CONFIG_JSON = json.loads(CONFIG.read_text())
+    except Exception:
+        _CONFIG_JSON = {}
+
+EXCHANGE = _CONFIG_JSON.get("exchange", {}).get("name", "binance")
+PAIRS = _CONFIG_JSON.get("exchange", {}).get(
+    "pair_whitelist", ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "AVAX/USDT"]
+)
 TIMEFRAMES = ["1h", "4h", "1d"]
 # v0.4.0: extended from 2023-2025 (bull only) to 2021-2025 to include
 # the 2022 winter regime. Cross-pair macro signals + bear-regime
 # resilience were both blocked by single-regime data in v0.3.0.
-TIMERANGE = "20210101-20251231"
+TIMERANGE = _CONFIG_JSON.get("timerange", "20210101-20251231")
 
 
 def data_exists() -> bool:
@@ -56,7 +70,7 @@ def data_exists() -> bool:
     # the v0.3.0 era cover only 2023+ and need prepending.
     import pandas as pd
 
-    data_dir = USER_DATA / "data"
+    data_dir = DATA_DIR
     tr_start_str = TIMERANGE.split("-")[0]  # e.g. "20210101"
     required_start = pd.Timestamp(tr_start_str, tz="UTC")
 
@@ -88,7 +102,7 @@ def download() -> None:
     args = {
         "config": [str(CONFIG)],
         "user_data_dir": str(USER_DATA),
-        "datadir": str(USER_DATA / "data"),
+        "datadir": str(DATA_DIR),
         "exchange": EXCHANGE,
         "pairs": PAIRS,
         "timeframes": TIMEFRAMES,
@@ -108,7 +122,7 @@ def download() -> None:
 
 
 def main() -> None:
-    data_dir = USER_DATA / "data"
+    data_dir = DATA_DIR
     if data_exists():
         print(f"Data already present at {data_dir} ({len(PAIRS)} pairs × {len(TIMEFRAMES)} timeframes).")
         print("Ready.")

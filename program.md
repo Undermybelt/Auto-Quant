@@ -93,6 +93,15 @@ To set up a new experiment, work with the user to:
 
 Once you get confirmation, kick off the experimentation.
 
+### Workspace isolation for concurrent agents
+
+If `AUTO_QUANT_WORKSPACE` is set, treat that directory as the mutable experiment
+root. `run.py` and `prepare.py` will read `config.json`, `user_data/strategies`,
+and `results.tsv` from that workspace unless a more specific override is set.
+Do not edit the repo-root `config.json`, `user_data/strategies`, or
+`results.tsv` for that lane. `AUTO_QUANT_DATA_DIR` may point at a shared
+read-only candle directory so parallel lanes do not duplicate market data.
+
 ## Experimentation
 
 Each round runs a backtest on ALL active strategies on a **fixed timerange**
