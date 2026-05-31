@@ -3,6 +3,11 @@ results.tsv
 # but DO track frozen snapshots under versions/
 !versions/**/results.tsv
 
+# Local data/provider config
+profile_source.csv
+scripts/ibkr_bridge/my_config*.yaml
+scripts/ibkr_bridge/my_config*.yaml.*
+
 # run logs — every experiment writes run.log, never commit
 run.log
 *.log
