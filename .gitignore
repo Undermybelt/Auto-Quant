@@ -3,8 +3,20 @@ results.tsv
 # but DO track frozen snapshots under versions/
 !versions/**/results.tsv
 
+# ict-engine lane artifacts stay in /tmp unless frozen as evidence under versions/
+/plan.md
+/failure_patterns.md
+/harness_layer_updates.md
+/review.md
+/regression_review.md
+/strategy_library.json
+/adoption_bundle*.json
+
 # Local data/provider config
 profile_source.csv
+config.*.json
+!config.json
+!versions/**/config.*.json
 scripts/ibkr_bridge/my_config*.yaml
 scripts/ibkr_bridge/my_config*.yaml.*
 
@@ -16,6 +28,10 @@ run.log
 !versions/**/*.log
 
 # FreqTrade-generated output
+user_data/strategies/*.py
+user_data/strategies/_archive/
+!user_data/strategies/_template.py.example
+!versions/**/user_data/strategies/**
 user_data/data/
 user_data/backtest_results/
 user_data/logs/

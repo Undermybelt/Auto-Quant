@@ -168,6 +168,10 @@ Useful overrides:
 - `AUTO_QUANT_RESULTS_TSV`: Pareto/history log override.
 
 If no environment variables are set, behavior is unchanged from upstream.
+For `ict-engine` handoff lanes, keep mutable strategy and review artifacts under
+`AUTO_QUANT_WORKSPACE` or another `/tmp` run root. Only commit harness code,
+tests, or durable docs unless `ict-engine` has promoted the candidate into an
+explicit evidence packet or practical-closure artifact.
 
 ### Permissions
 
@@ -216,6 +220,10 @@ Auto-Quant/
   workspace; everything else is evaluation contract. Up to 3 strategies
   simultaneously, hard cap. Multi-strategy exists specifically to fight
   the single-paradigm anchoring that v0.1.0 exhibited.
+- **ict-engine lanes are tmp-first.** Generated strategy sketches, lane plans,
+  reviews, logs, result journals, and strategy libraries stay outside the repo
+  until they are promoted into an explicit evidence packet or practical-closure
+  artifact.
 - **No CLI indirection.** The agent only runs `uv run prepare.py` and
   `uv run run.py`. `run.py` uses FreqTrade's `Backtesting` class in-process,
   so startup is fast and errors surface as real Python stack traces.

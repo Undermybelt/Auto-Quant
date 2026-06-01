@@ -102,6 +102,14 @@ Do not edit the repo-root `config.json`, `user_data/strategies`, or
 `results.tsv` for that lane. `AUTO_QUANT_DATA_DIR` may point at a shared
 read-only candle directory so parallel lanes do not duplicate market data.
 
+For `ict-engine` handoff lanes, unpromoted artifacts are not repository
+artifacts. Keep generated strategies, lane plans, reviews, logs, result
+journals, strategy libraries, and adoption bundles inside
+`AUTO_QUANT_WORKSPACE` or another `/tmp` run root until `ict-engine` promotes
+them into an explicit evidence packet or practical-closure artifact. If a
+candidate is only fail-closed, prep-only, observation-only, or sparse-positive,
+do not commit it here.
+
 ## Experimentation
 
 Each round runs a backtest on ALL active strategies on a **fixed timerange**
@@ -554,6 +562,10 @@ Rules:
 **Do NOT commit `results.tsv`.** It is gitignored on purpose — the log
 survives `git reset --hard`, which is essential so you don't forget what
 you've already tried.
+
+For `ict-engine` lanes, this also applies to generated strategy files and lane
+documents. They are mutable experiment state until an `ict-engine` evidence
+packet or practical-closure artifact explicitly admits them.
 
 ## The experiment loop
 

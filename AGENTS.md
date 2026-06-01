@@ -64,6 +64,13 @@ When `AUTO_QUANT_WORKSPACE` is available, do not mutate repo-root
 `config.json`, `user_data/strategies`, `user_data/data`, or `results.tsv` for
 that lane.
 
+Repo admission rule for `ict-engine` lanes: generated strategies, lane plans,
+reviews, logs, result journals, strategy libraries, and adoption bundles stay
+under `AUTO_QUANT_WORKSPACE` or another `/tmp` run root until `ict-engine`
+promotes them into an explicit evidence packet or practical-closure artifact.
+No strategy sketch or candidate packet enters this repository only because a
+backtest ran or a metric looked interesting.
+
 ## ict-engine Handoff
 
 If an `ict-engine` handoff includes `agent_workflow`, follow it as the
@@ -79,6 +86,10 @@ authoritative lane setup:
 metrics, or a generated strategy file is candidate evidence only. It does not
 imply `trade_usable=true`, promotion, or live readiness until `ict-engine`
 adoption and promotion gates explicitly pass.
+
+If the current candidate has not passed those gates and has not been packaged as
+an `ict-engine` evidence packet, leave every mutable artifact in `/tmp` and keep
+the repository change limited to harness code, tests, or durable documentation.
 
 Minimum return packet for `ict-engine`:
 
